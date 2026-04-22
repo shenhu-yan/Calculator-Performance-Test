@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线图书管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { color: #333; font-size: 28px; }
+        .nav { display: flex; gap: 15px; }
+        .nav a {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .nav a:hover { background: #5a6fd6; transform: translateY(-2px); }
+        .nav a.active { background: #333; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .sidebar h3 { margin-bottom: 15px; color: #333; }
+        .category-list { list-style: none; }
+        .category-list li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        .category-list li:hover {
+            background: #e9ecef;
+            border-left-color: #667eea;
+            transform: translateX(5px);
+        }
+        .category-list li.active {
+            background: #667eea;
+            color: white;
+            border-left-color: #5a6fd6;
+        }
+
+        .content-area {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .search-bar input:focus { outline: none; border-color: #667eea; }
+        .search-bar button {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .search-bar button:hover { background: #5a6fd6; transform: translateY(-2px); }
+
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-bar select {
+            padding: 8px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .book-card {
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .book-cover {
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+        }
+        .book-info { padding: 18px; }
+        .book-info h3 { color: #333; margin-bottom: 8px; font-size: 18px; }
+        .book-info p { color: #666; font-size: 14px; margin-bottom: 5px; }
+        .book-info .author { color: #888; font-style: italic; }
+        .book-info .price {
+            color: #e74c3c;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .book-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            flex: 1;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-secondary { background: #f8f9fa; color: #333; border: 1px solid #dee2e6; }
+        .btn-secondary:hover { background: #e9ecef; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            padding: 20px 0;
+        }
+        .pagination button {
+            padding: 10px 18px;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .pagination button:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination span { color: #666; font-size: 14px; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-card h4 { font-size: 32px; margin-bottom: 5px; }
+        .stat-card p { font-size: 14px; opacity: 0.9; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .modal-header h2 { color: #333; }
+        .close-btn {
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+        .close-btn:hover { color: #333; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-group textarea { resize: vertical; min-height: 100px; }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #28a745;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            animation: slideIn 0.3s ease-out;
+            display: none;
+        }
+        .toast.show { display: block; }
+        .toast.error { background: #dc3545; }
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .login-page {
+            max-width: 450px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .login-page h2 { text-align: center; margin-bottom: 30px; color: #333; }
+        .login-page .btn { width: 100%; padding: 14px; font-size: 16px; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        th { background: #f8f9fa; font-weight: bold; color: #333; }
+        tr:hover { background: #f8f9fa; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="modal" class="modal">
+    <div class="modal-content" id="modalContent"></div>
+</div>
+
+<script>
+const books = [
+    { id: 1, title: 'Python编程从入门到实践', author: 'Eric Matthes', category: '计算机', price: 89.00, stock: 15, isbn: '978-7-115-42802-8', description: '本书是一本针对所有层次的Python读者而作的Python入门书。全书分两部分：第一部分介绍用Python编程所必须了解的基本概念。', rating: 4.8 },
+    { id: 2, title: '深入理解计算机系统', author: 'Randal E.Bryant', category: '计算机', price: 139.00, stock: 8, isbn: '978-7-111-54493-7', description: '本书从程序员的视角详细阐述计算机系统的本质概念，并展示这些概念如何实实在在地影响应用程序的正确性、性能和实用性。', rating: 4.9 },
+    { id: 3, title: '算法导论', author: 'Thomas H.Cormen', category: '计算机', price: 128.00, stock: 12, isbn: '978-7-111-40701-0', description: '本书全面地介绍了计算机算法。对每一个算法的分析既易于理解又十分有趣，并保持了数学严谨性。', rating: 4.7 },
+    { id: 4, title: '人类简史', author: '尤瓦尔·赫拉利', category: '历史', price: 68.00, stock: 25, isbn: '978-7-5086-4544-2', description: '从十万年前有生命迹象开始到21世纪资本、科技交织的人类发展史。', rating: 4.6 },
+    { id: 5, title: '三体', author: '刘慈欣', category: '科幻', price: 93.00, stock: 30, isbn: '978-7-5366-9293-0', description: '文化大革命如火如荼进行的同时，军方探寻外星文明的绝秘计划"红岸工程"取得了突破性进展。', rating: 4.9 },
+    { id: 6, title: '活着', author: '余华', category: '文学', price: 35.00, stock: 20, isbn: '978-7-5063-2663-3', description: '讲述了农村人福贵悲惨的人生遭遇。福贵本是个阔少爷，可他嗜赌如命，终于赌光了家业。', rating: 4.8 },
+    { id: 7, title: '设计模式', author: 'Erich Gamma', category: '计算机', price: 99.00, stock: 10, isbn: '978-7-111-07575-2', description: '本书结合设计实例从面向对象的设计中精选出23个设计模式，总结了面向对象设计中最有价值的经验。', rating: 4.6 },
+    { id: 8, title: '明朝那些事儿', author: '当年明月', category: '历史', price: 168.00, stock: 18, isbn: '978-7-5057-2288-2', description: '以史料为基础，以年代和具体人物为主线，并加入了小说的笔法，语言幽默风趣。', rating: 4.7 },
+    { id: 9, title: '流浪地球', author: '刘慈欣', category: '科幻', price: 42.00, stock: 22, isbn: '978-7-5366-9534-7', description: '太阳即将毁灭，人类在地球表面建造出巨大的推进器，寻找新家园。然而宇宙之路危机四伏。', rating: 4.5 },
+    { id: 10, title: '百年孤独', author: '加西亚·马尔克斯', category: '文学', price: 55.00, stock: 16, isbn: '978-7-5442-4966-6', description: '描写了布恩迪亚家族七代人的传奇故事，以及加勒比海沿岸小镇马孔多的百年兴衰。', rating: 4.7 },
+    { id: 11, title: 'JavaScript高级程序设计', author: 'Nicholas C.Zakas', category: '计算机', price: 129.00, stock: 14, isbn: '978-7-115-27579-0', description: '本书是JavaScript超级畅销书的最新版。本书涵盖JavaScript语言各个方面，从基本语法到高级特性。', rating: 4.8 },
+    { id: 12, title: '银河帝国：基地', author: '艾萨克·阿西莫夫', category: '科幻', price: 48.00, stock: 19, isbn: '978-7-5399-7065-7', description: '银河帝国已有一万年历史，一位数学家预言帝国即将灭亡，于是建立了基地来保存文明火种。', rating: 4.6 }
+];
+
+const users = [
+    { username: 'admin', password: 'admin123', name: '管理员', role: 'admin' },
+    { username: 'zhangsan', password: '123456', name: '张三', role: 'user' },
+    { username: 'lisi', password: '123456', name: '李四', role: 'user' },
+    { username: 'wangwu', password: '123456', name: '王五', role: 'user' }
+];
+
+let currentUser = null;
+let currentPage = 1;
+let currentCategory = '全部';
+let searchKeyword = '';
+let sortBy = 'default';
+let borrowRecords = [];
+
+const PAGE_SIZE = 6;
+
+function init() {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+    }
+    
+    const savedRecords = localStorage.getItem('borrowRecords');
+    if (savedRecords) {
+        borrowRecords = JSON.parse(savedRecords);
+    }
+    
+    render();
+}
+
+function render() {
+    const app = document.getElementById('app');
+    
+    if (!currentUser) {
+        app.innerHTML = renderLoginPage();
+    } else {
+        app.innerHTML = renderMainPage();
+    }
+}
+
+function renderLoginPage() {
+    return `
+        <div class="login-page">
+            <h2>📚 在线图书管理系统</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="username" placeholder="请输入用户名" required value="admin">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="password" placeholder="请输入密码" required value="admin123">
+                </div>
+                <button type="submit" class="btn btn-primary">登 录</button>
+            </form>
+            <p style="text-align:center;margin-top:20px;color:#666;font-size:14px;">
+                测试账号: admin/admin123 或 zhangsan/123456
+            </p>
+        </div>
+    `;
+}
+
+function handleLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    const user = users.find(u => u.username === username && u.password === password);
+    
+    if (user) {
+        currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        showToast('登录成功！欢迎 ' + user.name);
+        render();
+    } else {
+        showToast('用户名或密码错误！', true);
+    }
+}
+
+function logout() {
+    currentUser = null;
+    localStorage.removeItem('currentUser');
+    showToast('已退出登录');
+    render();
+}
+
+function renderMainPage() {
+    let filteredBooks = [...books];
+    
+    if (currentCategory !== '全部') {
+        filteredBooks = filteredBooks.filter(b => b.category === currentCategory);
+    }
+    
+    if (searchKeyword) {
+        filteredBooks = filteredBooks.filter(b => 
+            b.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+            b.author.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+            b.isbn.includes(searchKeyword)
+        );
+    }
+    
+    if (sortBy === 'price-asc') {
+        filteredBooks.sort((a, b) => a.price - b.price);
+    } else if (sortBy === 'price-desc') {
+        filteredBooks.sort((a, b) => b.price - a.price);
+    } else if (sortBy === 'rating') {
+        filteredBooks.sort((a, b) => b.rating - a.rating);
+    }
+    
+    const totalPages = Math.ceil(filteredBooks.length / PAGE_SIZE);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const paginatedBooks = filteredBooks.slice(start, start + PAGE_SIZE);
+    
+    const categories = ['全部', ...new Set(books.map(b => b.category))];
+    
+    return `
+        <div class="header">
+            <h1>📚 在线图书管理系统</h1>
+            <div style="display:flex;align-items:center;gap:20px;">
+                <div class="user-info">
+                    <div class="user-avatar">${currentUser.name[0]}</div>
+                    <span>${currentUser.name} (${currentUser.role === 'admin' ? '管理员' : '用户'})</span>
+                </div>
+                <button class="btn btn-secondary" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+        
+        <div class="nav">
+            <a href="#" onclick="showPage('home')" class="${window.currentView === 'home' ? 'active' : ''}">🏠 首页</a>
+            <a href="#" onclick="showPage('books')" class="${window.currentView === 'books' ? 'active' : ''}">📖 图书列表</a>
+            <a href="#" onclick="showPage('records')" class="${window.currentView === 'records' ? 'active' : ''}">📋 我的借阅</a>
+        </div>
+
+        ${renderStats()}
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>📂 图书分类</h3>
+                <ul class="category-list">
+                    ${categories.map(cat => `
+                        <li onclick="setCategory('${cat}')" class="${currentCategory === cat ? 'active' : ''}">
+                            ${cat} (${cat === '全部' ? books.length : books.filter(b => b.category === cat).length})
+                        </li>
+                    `).join('')}
+                </ul>
+                
+                <h3 style="margin-top:30px;">🔥 热门推荐</h3>
+                <ul class="category-list">
+                    ${books.slice().sort((a,b) => b.rating - a.rating).slice(0, 5).map(book => `
+                        <li onclick="viewBookDetail(${book.id})">${book.title.substring(0, 10)}...</li>
+                    `).join('')}
+                </ul>
+            </div>
+            
+            <div class="content-area">
+                <div class="search-bar">
+                    <input type="text" placeholder="🔍 搜索书名、作者或ISBN..." 
+                           value="${searchKeyword}" 
+                           onchange="searchBooks(this.value)"
+                           onkeyup="if(event.key==='Enter')searchBooks(this.value)">
+                    <button onclick="searchBooks(document.querySelector('.search-bar input').value)">搜索</button>
+                </div>
+                
+                <div class="filter-bar">
+                    <select onchange="setSortBy(this.value)" value="${sortBy}">
+                        <option value="default" ${sortBy === 'default' ? 'selected' : ''}>默认排序</option>
+                        <option value="price-asc" ${sortBy === 'price-asc' ? 'selected' : ''}>价格升序</option>
+                        <option value="price-desc" ${sortBy === 'price-desc' ? 'selected' : ''}>价格降序</option>
+                        <option value="rating" ${sortBy === 'rating' ? 'selected' : ''}>评分最高</option>
+                    </select>
+                    <span style="color:#666;line-height:38px;">
+                        共找到 <strong>${filteredBooks.length}</strong> 本图书
+                    </span>
+                </div>
+                
+                <div class="book-grid">
+                    ${paginatedBooks.map(book => `
+                        <div class="book-card" onclick="viewBookDetail(${book.id})">
+                            <div class="book-cover">${book.title[0]}</div>
+                            <div class="book-info">
+                                <h3>${book.title}</h3>
+                                <p class="author">作者: ${book.author}</p>
+                                <p>分类: ${book.category}</p>
+                                <p>库存: ${book.stock > 0 ? '<span class="badge badge-success">有货 (' + book.stock + ')</span>' : '<span class="badge badge-danger">缺货</span>'}</p>
+                                <div class="price">¥${book.price.toFixed(2)}</div>
+                                <div class="book-actions" onclick="event.stopPropagation()">
+                                    <button class="btn btn-primary" onclick="borrowBook(${book.id})" 
+                                            ${book.stock <= 0 ? 'disabled' : ''}>
+                                        借阅
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="viewBookDetail(${book.id})">
+                                        详情
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                ${totalPages > 1 ? `
+                    <div class="pagination">
+                        <button onclick="goToPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>
+                            ◀ 上一页
+                        </button>
+                        <span>第 ${currentPage} / ${totalPages} 页</span>
+                        <button onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>
+                            下一页 ▶
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function renderStats() {
+    const totalBooks = books.length;
+    const totalCategories = new Set(books.map(b => b.category)).size;
+    const myBorrows = borrowRecords.filter(r => r.user === currentUser.username).length;
+    const availableBooks = books.filter(b => b.stock > 0).length;
+    
+    return `
+        <div class="stats">
+            <div class="stat-card">
+                <h4>${totalBooks}</h4>
+                <p>馆藏图书总数</p>
+            </div>
+            <div class="stat-card">
+                <h4>${totalCategories}</h4>
+                <p>图书分类数</p>
+            </div>
+            <div class="stat-card">
+                <h4>${availableBooks}</h4>
+                <p>可借阅图书</p>
+            </div>
+            <div class="stat-card">
+                <h4>${myBorrows}</h4>
+                <p>我的借阅数</p>
+            </div>
+        </div>
+    `;
+}
+
+function setCategory(category) {
+    currentCategory = category;
+    currentPage = 1;
+    render();
+}
+
+function searchBooks(keyword) {
+    searchKeyword = keyword;
+    currentPage = 1;
+    render();
+}
+
+function setSortBy(sort) {
+    sortBy = sort;
+    render();
+}
+
+function goToPage(page) {
+    currentPage = page;
+    render();
+}
+
+function showPage(page) {
+    window.currentView = page;
+    if (page === 'records') {
+        showBorrowRecords();
+    } else {
+        render();
+    }
+}
+
+function viewBookDetail(id) {
+    const book = books.find(b => b.id === id);
+    if (!book) return;
+    
+    const myBorrows = borrowRecords.filter(r => r.bookId === id && r.user === currentUser.username);
+    
+    const modalContent = document.getElementById('modalContent');
+    modalContent.innerHTML = `
+        <div class="modal-header">
+            <h2>📖 ${book.title}</h2>
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 1fr;gap:25px;">
+            <div class="book-cover" style="height:280px;border-radius:10px;">${book.title[0]}</div>
+            <div>
+                <p><strong>作者:</strong> ${book.author}</p>
+                <p><strong>分类:</strong> ${book.category}</p>
+                <p><strong>ISBN:</strong> ${book.isbn}</p>
+                <p><strong>价格:</strong> <span style="color:#e74c3c;font-size:24px;font-weight:bold;">¥${book.price.toFixed(2)}</span></p>
+                <p><strong>评分:</strong> ${'★'.repeat(Math.floor(book.rating))}${'☆'.repeat(5-Math.floor(book.rating))} ${book.rating}</p>
+                <p><strong>库存:</strong> ${book.stock > 0 ? '<span class="badge badge-success">' + book.stock + '本可借</span>' : '<span class="badge badge-danger">暂无库存</span>'}</p>
+                <hr style="margin:15px 0;border:none;border-top:1px solid #e9ecef;">
+                <p><strong>内容简介:</strong></p>
+                <p style="line-height:1.8;color:#666;">${book.description}</p>
+                <div style="margin-top:20px;display:flex;gap:10px;">
+                    <button class="btn btn-primary" onclick="borrowBook(${book.id});closeModal();" 
+                            ${book.stock <= 0 || myBorrows.length > 0 ? 'disabled' : ''}>
+                        ${myBorrows.length > 0 ? '已借阅' : '立即借阅'}
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('modal').classList.add('show');
+}
+
+function borrowBook(id) {
+    const book = books.find(b => b.id === id);
+    if (!book || book.stock <= 0) {
+        showToast('该图书暂时无库存！', true);
+        return;
+    }
+    
+    const existingRecord = borrowRecords.find(r => 
+        r.bookId === id && r.user === currentUser.username && !r.returned
+    );
+    
+    if (existingRecord) {
+        showToast('您已经借阅了这本书！', true);
+        return;
+    }
+    
+    book.stock--;
+    
+    const record = {
+        id: Date.now(),
+        bookId: book.id,
+        bookTitle: book.title,
+        user: currentUser.username,
+        userName: currentUser.name,
+        borrowDate: new Date().toLocaleDateString('zh-CN'),
+        dueDate: new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString('zh-CN'),
+        returned: false
+    };
+    
+    borrowRecords.push(record);
+    localStorage.setItem('borrowRecords', JSON.stringify(borrowRecords));
+    
+    showToast(`成功借阅《${book.title}》！请在${record.dueDate}前归还`);
+    render();
+}
+
+function showBorrowRecords() {
+    const app = document.getElementById('app');
+    const myRecords = borrowRecords.filter(r => r.user === currentUser.username);
+    
+    app.innerHTML = `
+        <div class="header">
+            <h1>📚 在线图书管理系统</h1>
+            <div style="display:flex;align-items:center;gap:20px;">
+                <div class="user-info">
+                    <div class="user-avatar">${currentUser.name[0]}</div>
+                    <span>${currentUser.name}</span>
+                </div>
+                <button class="btn btn-secondary" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+        
+        <div class="nav">
+            <a href="#" onclick="showPage('home')">🏠 首页</a>
+            <a href="#" onclick="showPage('books')">📖 图书列表</a>
+            <a href="#" onclick="showPage('records')" class="active">📋 我的借阅</a>
+        </div>
+        
+        <div class="content-area" style="margin-top:20px;">
+            <h2 style="margin-bottom:20px;">我的借阅记录 (${myRecords.length}条)</h2>
+            
+            ${myRecords.length === 0 ? '<p style="text-align:center;padding:40px;color:#999;">暂无借阅记录</p>' : `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>书名</th>
+                            <th>借阅日期</th>
+                            <th>应还日期</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${myRecords.map(r => {
+                            const isOverdue = new Date(r.dueDate) < new Date() && !r.returned;
+                            return `
+                                <tr>
+                                    <td><strong>${r.bookTitle}</strong></td>
+                                    <td>${r.borrowDate}</td>
+                                    <td>${r.dueDate}</td>
+                                    <td>
+                                        ${r.returned 
+                                            ? '<span class="badge badge-success">已归还</span>'
+                                            : isOverdue 
+                                                ? '<span class="badge badge-danger">已逾期</span>'
+                                                : '<span class="badge badge-warning">借阅中</span>'
+                                        }
+                                    </td>
+                                    <td>
+                                        ${!r.returned 
+                                            ? `<button class="btn btn-primary" onclick="returnBook(${r.id})">归还</button>`
+                                            : '-'
+                                        }
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `}
+        </div>
+    `;
+}
+
+function returnBook(recordId) {
+    const record = borrowRecords.find(r => r.id === recordId);
+    if (record) {
+        record.returned = true;
+        record.returnDate = new Date().toLocaleDateString('zh-CN');
+        
+        const book = books.find(b => b.id === record.bookId);
+        if (book) {
+            book.stock++;
+        }
+        
+        localStorage.setItem('borrowRecords', JSON.stringify(borrowRecords));
+        showToast(`成功归还《${record.bookTitle}》`);
+        showBorrowRecords();
+    }
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('show');
+}
+
+function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+init();
+</script>
+</body>
+</html>
